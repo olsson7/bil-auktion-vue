@@ -26,17 +26,7 @@ onMounted(async () => {
     <p v-if="loading">Laddar auktioner...</p>
     <p v-if="error" style="color: red">{{ error }}</p>
 
-    <ul v-if="!loading && auctions.length">
-      <li v-for="a in auctions" :key="a.id">
-        <h2>{{ a.brand }} {{ a.model }}</h2>
-        <p><b>Regnr:</b> {{ a.regNumber }}</p>
-        <p><b>År:</b> {{ a.year }}</p>
-        <p><b>Mil:</b> {{ a.mileage }}</p>
-        <p><b>Växellåda:</b> {{ a.gearbox }}</p>
-        <p><b>Acceptpris:</b> {{ a.reservePrice }}</p>
-        <a :href="a.url" target="_blank">Öppna på CarStore</a>
-      </li>
-    </ul>
+    
 
     <p v-if="!loading && auctions.length === 0">Inga auktioner tillgängliga.</p>
   </main>
