@@ -15,6 +15,8 @@ export default async function handler(req, res) {
 
     for (const auction of auctionsList) {
       console.log(`🔹 Fetching details for auction id: ${auction.id}`);
+      console.log(DETAIL_URL);
+
       const detailRes = await fetch(DETAIL_URL(auction.id));
       if (!detailRes.ok) {
         console.warn(`⚠️ Detail response for ${auction.id}: ${detailRes.status}`);
