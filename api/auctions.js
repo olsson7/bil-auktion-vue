@@ -1,6 +1,4 @@
 // /api/auctions.js
-// Vercel serverless route
-
 export default async function handler(req, res) {
   try {
     const auctions = await fetchAuctions();
@@ -11,18 +9,11 @@ export default async function handler(req, res) {
 }
 
 async function fetchAuctions() {
+  // Hämta listan med auktioner
   let auctionsJson;
   try {
     const res = await fetch("https://carstore.eu/auction/se/data/auctions");
-
-    // Om vi får HTML eller felaktigt svar, returnera tom array
-    const text = await res.text();
-    try {
-      auctionsJson = JSON.parse(text);
-    } catch {
-      console.warn('API returned non-JSON response, returning empty array.');
-      return [];
-    }
+    auctionsJson = await res.json();
   } catch (err) {
     console.error('Error fetching auctions list:', err);
     return [];
@@ -33,17 +24,17 @@ async function fetchAuctions() {
   const detailedAuctions = await Promise.all(
     auctions.map(async (auction) => {
       try {
-        const detailRes = await fetch(`https://carstore.eu/auction/se/${auction.id}`);
-        const detailText = await detailRes.text();
-        let detailJson;
-        try {
-          detailJson = JSON.parse(detailText);
-        } catch {
-          return null; // Hoppa över om JSON är ogiltig
-        }
+        // Använd Next.js-data-API:t för detaljer
+        const detailRes = await fetch(
+          `https://carstore.eu/auction/se/_next/data/Wwwm4JBSjcCxpZZvjcbRr/sv-SE/${auction.id}.json?path=${auction.id}`
+        );
+        const detailJson = await detailRes.json();
 
         const carData = detailJson.pageProps?.componentProps?.["d85208dc-ef72-44b1-9152-d24372ae1dab"]?.car;
-        if (!carData) return null;
+        if (!carData) {
+          console.warn(`⚠️ Ingen bilinformation hittades för auction ${auction.id}`);
+          return null;
+        }
 
         return {
           id: auction.id,
@@ -56,7 +47,8 @@ async function fetchAuctions() {
             original: img.original
           })) || []
         };
-      } catch {
+      } catch (err) {
+        console.error(`❌ Fel vid hämtning av auktion ${auction.id}:`, err);
         return null;
       }
     })
