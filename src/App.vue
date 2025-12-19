@@ -4,19 +4,40 @@ import { ref, onMounted } from "vue";
 const auctions = ref([]);
 const loading = ref(true);
 const selected = ref(null);
+const error = ref(null);
 
+// Hämta alla auktioner när komponenten mountas
 onMounted(async () => {
-  const res = await fetch("/api/auctions");
-  auctions.value = await res.json();
-  loading.value = false;
+  try {
+    const res = await fetch("/api/auctions");
+    if (!res.ok) {
+      throw new Error("Kunde inte hämta auktioner");
+    }
+    auctions.value = await res.json();
+  } catch (err) {
+    console.error(err);
+    error.value = "Kunde inte ladda auktioner";
+  } finally {
+    loading.value = false;
+  }
 });
 
+// Öppna en specifik auktion
 async function openAuction(id) {
-  const res = await fetch(`/api/auction/${id}`);
-  const data = await res.json();
-
-  // Sätt selected till objektet vi fått från servern
-  selected.value = data;
+  selected.value = null;
+  try {
+    const res = await fetch(`/api/auction/${id}`);
+    if (!res.ok) {
+      console.error("Auktion hittades inte");
+      error.value = "Auktion hittades inte";
+      return;
+    }
+    const data = await res.json();
+    selected.value = data; // { car, auction }
+  } catch (err) {
+    console.error("Error fetching auction:", err);
+    error.value = "Kunde inte hämta auktion";
+  }
 }
 </script>
 
@@ -24,19 +45,25 @@ async function openAuction(id) {
   <main style="max-width: 900px; margin: auto; font-family: sans-serif">
     <h1>🚗 CarStore Auktioner</h1>
 
-    <p v-if="loading">Laddar...</p>
+    <!-- Visar loading -->
+    <p v-if="loading">Laddar auktioner...</p>
 
-    <ul v-if="!loading">
+    <!-- Visar fel -->
+    <p v-if="error" style="color: red">{{ error }}</p>
+
+    <!-- Lista över alla auktioner -->
+    <ul v-if="!loading && auctions.length">
       <li v-for="a in auctions" :key="a.id">
         <button @click="openAuction(a.id)">Auktion #{{ a.id }}</button>
       </li>
     </ul>
 
+    <p v-if="!loading && auctions.length === 0">Inga auktioner tillgängliga.</p>
+
+    <!-- Visar detaljer för vald auktion -->
     <section v-if="selected">
       <hr />
-      <h2>
-        {{ selected.car.car_brand }} {{ selected.car.car_model }}
-      </h2>
+      <h2>{{ selected.car.car_brand }} {{ selected.car.car_model }}</h2>
 
       <p><b>Regnr:</b> {{ selected.car.car_regno }}</p>
       <p><b>År:</b> {{ selected.car.car_year }}</p>
@@ -50,3 +77,11 @@ async function openAuction(id) {
     </section>
   </main>
 </template>
+
+<style>
+button {
+  margin: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+</style>

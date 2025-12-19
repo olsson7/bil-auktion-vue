@@ -7,10 +7,13 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "CAR_DETAIL_URL saknas" });
     }
 
-    // Sätt in auktion id i URL
     const url = template.replace(/%d/g, id);
-
     const response = await fetch(url);
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: "Kunde inte hämta auktion" });
+    }
+
     const data = await response.json();
 
     // Plocka ut objektet från componentProps utan att bry sig om UUID
@@ -23,9 +26,14 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "Auktion hittades inte" });
     }
 
-    // Tillåt CORS (för Vue frontend)
+    // Returnera ett enkelt objekt { car, auction }
+    const result = {
+      car: auctionData.car,
+      auction: auctionData.auction
+    };
+
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.status(200).json(auctionData);
+    res.status(200).json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch auction" });
