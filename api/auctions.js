@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 const AUCTIONS_URL = 'https://carstore.eu/auction/se/api/auctions';
-const DETAIL_URL = (id) => `https://carstore.eu/auction/se/_next/data/V-7RtdkyYe-OXKGTW8Rt/sv-SE/${id}.json?path=${id}`;
+const DETAIL_URL = (id) => `https://carstore.eu/auction/se/_next/data/Wwwm4JBSjcCxpZZvjcbRr/sv-SE/${id}.json?path=${id}`;
 
 export default async function handler(req, res) {
   try {
