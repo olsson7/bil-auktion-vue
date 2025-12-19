@@ -1,4 +1,4 @@
-import { createApp } from "vue"
-import App from "./components/App.vue";
+import { createApp } from 'vue';
+import App from './components/App.vue'; // korrekt relativ sökväg
 
-createApp(App).mount("#app")
+createApp(App).mount('#app');
