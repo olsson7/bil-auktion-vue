@@ -1,68 +1,65 @@
-import fetch from 'node-fetch';
+import fetch from "node-fetch";
 
-const AUCTIONS_URL = 'https://carstore.eu/auction/se/api/auctions';
-const DETAIL_URL = (id) =>
-  `https://carstore.eu/auction/se/_next/data/Wwwm4JBSjcCxpZZvjcbRr/sv-SE/${id}.json?path=${id}`;
+interface CarImage {
+  thumbnail: string;
+  original: string;
+}
 
-export default async function handler(req, res) {
-  try {
-    console.log('📡 Fetching auctions list...');
-    const listRes = await fetch(AUCTIONS_URL);
-    if (!listRes.ok) throw new Error(`Failed to fetch auctions: ${listRes.status}`);
-    const auctionsList = await listRes.json();
-    console.log(`✅ Auctions list received, length: ${auctionsList.length}`);
+interface CarDetail {
+  id: string;
+  brand: string | null;
+  model: string | null;
+  year: string | null;
+  regNumber: string | null;
+  images: CarImage[];
+}
 
-    // Hämta detaljer parallellt
-    const detailedAuctions = await Promise.all(
-      auctionsList.map(async (auction) => {
-        try {
-          const url = DETAIL_URL(auction.id);
-          console.log(`🔹 Fetching details for auction id: ${auction.id}`);
-          console.log(`Detail URL: ${url}`);
+async function fetchAuctions() {
+  // Hämta listan med auktioner
+  const res = await fetch("https://carstore.eu/auction/se/data/auctions");
+  const auctionsJson = await res.json();
+  const auctions = auctionsJson.data || [];
 
-          const detailRes = await fetch(url);
-          if (!detailRes.ok) {
-            console.warn(`⚠️ Detail response for ${auction.id}: ${detailRes.status}`);
-            return null;
-          }
+  // Hämta detaljinformation för varje auktion
+  const detailedAuctions: CarDetail[] = await Promise.all(
+    auctions.map(async (auction: any) => {
+      try {
+        const detailRes = await fetch(`https://carstore.eu/auction/se/${auction.id}`);
+        const detailJson = await detailRes.json();
 
-          const detailJson = await detailRes.json();
-          const data =
-            detailJson.pageProps?.layoutData?.componentProps?.[
-              'd85208dc-ef72-44b1-9152-d24372ae1dab'
-            ]?.car;
+        // Path till bilinformationen i JSON:en
+        const carData = detailJson.pageProps?.componentProps?.["d85208dc-ef72-44b1-9152-d24372ae1dab"]?.car;
 
-          if (!data) {
-            console.warn(`⚠️ Auction data missing for ${auction.id}`);
-            return null;
-          }
-
-          // Returnera standardiserad info
-          return {
-            id: auction.id,
-            brand: data.fields?.brand || 'Okänt',
-            model: data.fields?.model || 'Okänt',
-            regNumber: data.fields?.regNumber || 'Okänt',
-            year: data.fields?.year || 'Okänt',
-            mileage: data.fields?.mileage || 'Okänt',
-            gearbox: data.fields?.gearbox || 'Okänt',
-            reservePrice: data.fields?.reservePrice || 'Okänt',
-            url: `https://carstore.eu/auction/se/${auction.id}`,
-          };
-        } catch (err) {
-          console.warn(`⚠️ Error fetching auction ${auction.id}:`, err);
+        if (!carData) {
+          console.warn(`⚠️ Ingen bilinformation hittades för auction ${auction.id}`);
           return null;
         }
-      })
-    );
 
-    // Ta bort nulls
-    const finalAuctions = detailedAuctions.filter(Boolean);
+        // Extrahera relevant information
+        return {
+          id: auction.id,
+          brand: carData.brand || null,
+          model: carData.model || null,
+          year: carData.year || null,
+          regNumber: carData.regNumber || null,
+          images: carData.car_images?.map((img: any) => ({
+            thumbnail: img.thumbnail_url,
+            original: img.original
+          })) || []
+        };
+      } catch (error) {
+        console.error(`❌ Fel vid hämtning av auktion ${auction.id}:`, error);
+        return null;
+      }
+    })
+  );
 
-    console.log(`✅ Detailed auctions fetched, count: ${finalAuctions.length}`);
-    res.status(200).json(finalAuctions);
-  } catch (err) {
-    console.error('Error fetching auctions:', err);
-    res.status(500).json({ error: 'Kunde inte hämta auktioner' });
-  }
+  // Filtrera bort null-värden (om någon auktion misslyckades)
+  return detailedAuctions.filter(Boolean);
 }
+
+// Exempel på att köra funktionen
+(async () => {
+  const auctions = await fetchAuctions();
+  console.log(JSON.stringify(auctions, null, 2));
+})();
