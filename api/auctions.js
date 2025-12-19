@@ -1,4 +1,4 @@
-const fetch = require("node-fetch");
+import fetch from "node-fetch"; // OBS: Node 18+ har fetch inbyggd, så node-fetch behövs ej
 
 async function fetchAuctions() {
   const res = await fetch("https://carstore.eu/auction/se/data/auctions");
