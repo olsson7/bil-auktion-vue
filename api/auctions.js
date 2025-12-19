@@ -1,67 +1,52 @@
-export default async function handler(req, res) {
-  console.log("🚀 Starting auctions handler");
+import fetch from 'node-fetch';
 
-  const url = process.env.AUCTIONS_URL;
-  const detailTemplate = process.env.CAR_DETAIL_URL;
+const AUCTIONS_URL = 'https://carstore.eu/auction/se/api/auctions';
 
-  console.log("AUCTIONS_URL:", url);
-  console.log("CAR_DETAIL_URL template:", detailTemplate);
-
-  if (!url || !detailTemplate) {
-    return res.status(500).json({ error: "AUCTIONS_URL eller CAR_DETAIL_URL saknas" });
-  }
-
+async function fetchAuctionDetails(auctionId) {
   try {
-    console.log("📡 Fetching auctions list...");
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error("❌ Failed to fetch auctions list, status:", response.status);
-      return res.status(500).json({ error: "Failed to fetch auctions list" });
+    // 1. Hämta HTML-sidan direkt
+    const html = await fetch(`https://carstore.eu/auction/se/${auctionId}`)
+      .then(res => res.text());
+
+    // 2. Extrahera __NEXT_DATA__ script
+    const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.+?)<\/script>/s);
+    if (!match) {
+      console.warn(`Ingen __NEXT_DATA__ för auctionId ${auctionId}`);
+      return null;
     }
 
-    const auctionsList = await response.json();
-    console.log("Auctions list received, length:", auctionsList.length);
+    const nextData = JSON.parse(match[1]);
 
-    const UUID = "d85208dc-ef72-44b1-9152-d24372ae1dab";
+    // 3. Hämta componentProps
+    const componentProps = nextData.props.pageProps.componentProps['d85208dc-ef72-44b1-9152-d24372ae1dab'];
+    if (!componentProps) {
+      console.warn(`Ingen componentProps för auctionId ${auctionId}`);
+      return null;
+    }
 
-    const detailedAuctions = await Promise.all(
-      auctionsList.map(async (a) => {
-        const detailUrl = detailTemplate.replace(/%d/g, a.id);
-        console.log(`🔹 Fetching details for auction id: ${a.id}`);
-        console.log("Detail URL:", detailUrl);
+    return componentProps;
 
-        try {
-          const detailRes = await fetch(detailUrl);
-          if (!detailRes.ok) {
-            console.log(`Detail response for ${a.id}:`, detailRes.status);
-            return null;
-          }
-
-          const data = await detailRes.json();
-          const auctionData = data.pageProps?.componentProps?.[UUID];
-
-          if (!auctionData) {
-            console.log(`❌ No auctionData found for id: ${a.id}`);
-            return null;
-          }
-
-          return {
-            car: auctionData.car,
-            auction: auctionData.auction
-          };
-        } catch (err) {
-          console.error(`❌ Failed to fetch details for auction ${a.id}`, err);
-          return null;
-        }
-      })
-    );
-
-    const result = detailedAuctions.filter(Boolean);
-    console.log("✅ Detailed auctions fetched, count:", result.length);
-
-    res.status(200).json(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch auctions" });
+  } catch (error) {
+    console.error(`Fel vid fetch för auctionId ${auctionId}:`, error);
+    return null;
   }
 }
+
+async function fetchAllAuctions() {
+  const auctionsList = await fetch(AUCTIONS_URL).then(res => res.json());
+  console.log(`Antal auktioner: ${auctionsList.length}`);
+
+  const results = [];
+
+  for (const auction of auctionsList) {
+    console.log(`🔹 Hämtar detaljer för auction id: ${auction.id}`);
+    const details = await fetchAuctionDetails(auction.id);
+    if (details) results.push(details);
+  }
+
+  console.log(`✅ Auktioner hämtade: ${results.length}`);
+  return results;
+}
+
+// Kör
+fetchAllAuctions().then(all => console.log('Klar!'));
