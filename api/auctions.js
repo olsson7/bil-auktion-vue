@@ -14,6 +14,11 @@ export default async function handler(req, res) {
   try {
     console.log("📡 Fetching auctions list...");
     const response = await fetch(url);
+    if (!response.ok) {
+      console.error("❌ Failed to fetch auctions list, status:", response.status);
+      return res.status(500).json({ error: "Failed to fetch auctions list" });
+    }
+
     const auctionsList = await response.json();
     console.log("Auctions list received, length:", auctionsList.length);
 
@@ -33,8 +38,7 @@ export default async function handler(req, res) {
           }
 
           const data = await detailRes.json();
-          const componentProps = data.pageProps?.componentProps || {};
-          const auctionData = componentProps[UUID];
+          const auctionData = data.pageProps?.componentProps?.[UUID];
 
           if (!auctionData) {
             console.log(`❌ No auctionData found for id: ${a.id}`);
