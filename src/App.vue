@@ -1,24 +1,22 @@
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted } from "vue";
 
-const auctions = ref([])
-const loading = ref(true)
-const selected = ref(null)
+const auctions = ref([]);
+const loading = ref(true);
+const selected = ref(null);
 
 onMounted(async () => {
-  const res = await fetch("/api/auctions")
-  auctions.value = await res.json()
-  loading.value = false
-})
+  const res = await fetch("/api/auctions");
+  auctions.value = await res.json();
+  loading.value = false;
+});
 
 async function openAuction(id) {
-  const res = await fetch(`/api/auction/${id}`)
-  const data = await res.json()
+  const res = await fetch(`/api/auction/${id}`);
+  const data = await res.json();
 
-  selected.value =
-    data.pageProps.componentProps[
-      "d85208dc-ef72-44b1-9152-d24372ae1dab"
-    ]
+  // Sätt selected till objektet vi fått från servern
+  selected.value = data;
 }
 </script>
 
@@ -30,17 +28,14 @@ async function openAuction(id) {
 
     <ul v-if="!loading">
       <li v-for="a in auctions" :key="a.id">
-        <button @click="openAuction(a.id)">
-          Auktion #{{ a.id }}
-        </button>
+        <button @click="openAuction(a.id)">Auktion #{{ a.id }}</button>
       </li>
     </ul>
 
     <section v-if="selected">
       <hr />
       <h2>
-        {{ selected.car.car_brand }}
-        {{ selected.car.car_model }}
+        {{ selected.car.car_brand }} {{ selected.car.car_model }}
       </h2>
 
       <p><b>Regnr:</b> {{ selected.car.car_regno }}</p>
@@ -49,10 +44,7 @@ async function openAuction(id) {
       <p><b>Växellåda:</b> {{ selected.car.car_gearbox }}</p>
       <p><b>Acceptpris:</b> {{ selected.auction.acceptPrice }}</p>
 
-      <a
-        :href="`https://carstore.eu/auction/se/${selected.auction.id}`"
-        target="_blank"
-      >
+      <a :href="`https://carstore.eu/auction/se/${selected.auction.id}`" target="_blank">
         Öppna på CarStore
       </a>
     </section>

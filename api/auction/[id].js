@@ -1,22 +1,33 @@
 export default async function handler(req, res) {
-  const { id } = req.query
+  const { id } = req.query;
 
   try {
-    const template = process.env.CAR_DETAIL_URL
+    const template = process.env.CAR_DETAIL_URL;
     if (!template) {
-      return res.status(500).json({ error: "CAR_DETAIL_URL saknas" })
+      return res.status(500).json({ error: "CAR_DETAIL_URL saknas" });
     }
 
-    // Sätt in auction id i URL
-    const url = template.replace(/%d/g, id)
+    // Sätt in auktion id i URL
+    const url = template.replace(/%d/g, id);
 
-    const response = await fetch(url)
-    const data = await response.json()
+    const response = await fetch(url);
+    const data = await response.json();
 
-    res.setHeader("Access-Control-Allow-Origin", "*")
-    res.status(200).json(data)
+    // Plocka ut objektet från componentProps utan att bry sig om UUID
+    const componentProps = data.pageProps?.componentProps || {};
+    const auctionData = Object.values(componentProps).find(
+      item => item.auction?.id == id
+    );
+
+    if (!auctionData) {
+      return res.status(404).json({ error: "Auktion hittades inte" });
+    }
+
+    // Tillåt CORS (för Vue frontend)
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.status(200).json(auctionData);
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: "Failed to fetch auction" })
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch auction" });
   }
 }
