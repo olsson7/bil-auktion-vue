@@ -26,7 +26,6 @@ onMounted(async () => {
     <p v-if="loading">Laddar auktioner...</p>
     <p v-if="error" style="color: red">{{ error }}</p>
 
-    
 
     <p v-if="!loading && auctions.length === 0">Inga auktioner tillgängliga.</p>
   </main>
