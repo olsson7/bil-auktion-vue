@@ -13,9 +13,10 @@ export default async function handler(req, res) {
 
     const detailedAuctions = [];
 
-    for (const auction of auctionsList) {
-      console.log(`🔹 Fetching details for auction id: ${auction.id}`);
-      console.log(DETAIL_URL);
+for (const auction of auctionsList) {
+  const url = DETAIL_URL(auction.id); // Anropa funktionen med auktionens id
+  console.log(`🔹 Fetching details for auction id: ${auction.id}`);
+  console.log(`Detail URL: ${url}`);
 
       const detailRes = await fetch(DETAIL_URL(auction.id));
       if (!detailRes.ok) {
