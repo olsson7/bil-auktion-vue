@@ -27,16 +27,14 @@ onMounted(async () => {
     <p v-if="error" style="color: red">{{ error }}</p>
 
     <ul v-if="!loading && auctions.length">
-      <li v-for="a in auctions" :key="a.id" style="margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
-        <h2>{{ a.car.car_brand }} {{ a.car.car_model }}</h2>
-        <p><b>Regnr:</b> {{ a.car.car_regno }}</p>
-        <p><b>År:</b> {{ a.car.car_year }}</p>
-        <p><b>Mil:</b> {{ a.car.car_mileage_text }}</p>
-        <p><b>Växellåda:</b> {{ a.car.car_gearbox }}</p>
-        <p><b>Acceptpris:</b> {{ a.auction.acceptPrice }}</p>
-        <a :href="`https://carstore.eu/auction/se/${a.auction.id}`" target="_blank">
-          Öppna på CarStore
-        </a>
+      <li v-for="a in auctions" :key="a.id">
+        <h2>{{ a.brand }} {{ a.model }}</h2>
+        <p><b>Regnr:</b> {{ a.regNumber }}</p>
+        <p><b>År:</b> {{ a.year }}</p>
+        <p><b>Mil:</b> {{ a.mileage }}</p>
+        <p><b>Växellåda:</b> {{ a.gearbox }}</p>
+        <p><b>Acceptpris:</b> {{ a.reservePrice }}</p>
+        <a :href="a.url" target="_blank">Öppna på CarStore</a>
       </li>
     </ul>
 
