@@ -1,20 +1,32 @@
 export default async function handler(req, res) {
   const url = process.env.AUCTIONS_URL;
-  if (!url) {
-    console.error("AUCTIONS_URL saknas!");
-    return res.status(500).json({ error: "AUCTIONS_URL saknas" });
+  const template = process.env.CAR_DETAIL_URL;
+
+  if (!url || !template) {
+    return res.status(500).json({ error: "AUCTIONS_URL eller CAR_DETAIL_URL saknas" });
   }
 
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error("Fetch misslyckades:", response.status, response.statusText);
-      return res.status(500).json({ error: "Kunde inte hämta data från AUCTIONS_URL" });
-    }
-    const data = await response.json();
-    res.status(200).json(data);
+    const auctionsRes = await fetch(url);
+    const auctionsData = await auctionsRes.json();
+
+    // Plocka ut detaljer för varje auktion
+    const detailed = await Promise.all(
+      auctionsData.map(async a => {
+        const detailRes = await fetch(template.replace(/%d/g, a.id));
+        const detailData = await detailRes.json();
+        const componentProps = detailData.pageProps?.componentProps || {};
+        const auctionData = Object.values(componentProps).find(item => item.auction?.id == a.id);
+        return {
+          car: auctionData.car,
+          auction: auctionData.auction
+        };
+      })
+    );
+
+    res.status(200).json(detailed);
   } catch (err) {
-    console.error("Exception i /api/auctions:", err);
-    res.status(500).json({ error: "Exception vid hämtning av auktioner" });
+    console.error(err);
+    res.status(500).json({ error: "Kunde inte hämta auktioner" });
   }
 }
