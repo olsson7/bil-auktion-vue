@@ -31,16 +31,23 @@ for (const auction of auctionsList) {
         continue;
       }
 
+      const data = detailJson.pageProps?.layoutData?.componentProps?.["d85208dc-ef72-44b1-9152-d24372ae1dab"]?.car;
+
+      if (!data) {
+        console.warn(`⚠️ Auction data missing for ${auction.id}`);
+        continue;
+      }
+
       detailedAuctions.push({
-        id: data.id,
-        brand: data.brand,
-        model: data.model,
-        regNumber: data.regNumber,
-        year: data.year,
-        mileage: data.mileage,
-        gearbox: data.gearbox,
-        reservePrice: data.reservePrice,
-        url: `https://carstore.eu/auction/se/${data.id}`,
+        id: auction.id,
+        brand: data.brand || "Okänt",
+        model: data.model || "Okänt",
+        regNumber: data.regNumber || "Okänt",
+        year: data.year || "Okänt",
+        mileage: data.mileage || "Okänt",
+        gearbox: data.gearbox || "Okänt",
+        reservePrice: data.reservePrice || "Okänt",
+        url: `https://carstore.eu/auction/se/${auction.id}`,
       });
     }
 
