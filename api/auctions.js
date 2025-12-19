@@ -3,7 +3,7 @@ import fetch from 'node-fetch'; // om Node 18+, kan du använda global fetch ist
 
 const AUCTIONS_URL = 'https://carstore.eu/auction/se/api/auctions';
 const CAR_DETAIL_URL_TEMPLATE = (id) =>
-  `https://carstore.eu/auction/se/_next/data/V-7RtdkyYe-OXKGTW8Rt/sv-SE/${id}.json?path=${id}`;
+  `https://carstore.eu/auction/se/_next/data/Wwwm4JBSjcCxpZZvjcbRr/sv-SE/${id}.json?path=${id}`;
 
 export default async function handler(req, res) {
   console.log('📡 Starting auctions handler');
